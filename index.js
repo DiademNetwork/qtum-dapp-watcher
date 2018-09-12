@@ -18,9 +18,9 @@ metadata.push(qtumRepository.contracts['contracts/Achievements.sol'])
 metadata.push(qtumRepository.contracts['contracts/Users.sol'])
 metadata.push(qtumRepository.contracts['contracts/Rewards.sol'])
 
-const USERS_ADDRESS = 'e867e1d9901149fbf3b524bd442a70b4be24e62e'
-const ACHIEVEMENTS_ADDRESS = '8c5829dff0aa35dce35ecb18e38c7c4d24cb6abf'
-const REWARDS_ADDRESS = 'eaa89cfca2c3bdd2821c5895284b6ffc78cf41bb'
+const USERS_ADDRESS = '32b91b1a2df904a9764a2d699dfa08f57d3892b1'
+const ACHIEVEMENTS_ADDRESS = '41d6a2601f7293507fa78f9959eebbe34fe37d59'
+const REWARDS_ADDRESS = '0452450eb9cec5a3fde7ec1b02fe708ce03272c4'
 
 const REGISTER_EVENT = 'f20b245a781ab35d1a9d5876c7d4fbf5e873637eb1358f3d5e5036ba473164b7'
 const CREATE_EVENT = '7bc59cc544d3629d5593a7a9acdf5c47341b7b5ddb657976540aee69c406b8f4'
