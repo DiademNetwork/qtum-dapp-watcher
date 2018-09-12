@@ -28,21 +28,22 @@ class GetStream extends Writable {
     super({ objectMode: true })
 
     this.feed = feed
+    this.users = users
 
     this.eventHandlers = {
-      'Create': this.createAchievement,
-      'Update': this.updateAchievement,
-      'Confirm': this.confirmAchievement,
-      'Support': this.supportAchievement,
-      'Deposit': this.depositReward,
-      'Withdraw': this.withdrawReward,
-      'Register': this.registerUser
+      'Create': this.createAchievement.bind(this),
+      'Update': this.updateAchievement.bind(this),
+      'Confirm': this.confirmAchievement.bind(this),
+      'Support': this.supportAchievement.bind(this),
+      'Deposit': this.depositReward.bind(this),
+      'Withdraw': this.withdrawReward.bind(this),
+      'Register': this.registerUser.bind(this)
     }
   }
 
   async getUser(address) {
     const [ userName, userAccount, userAddress ] =
-      (await users.call('getUser', [address])).outputs
+      (await this.users.call('getUser', [address])).outputs
 
     return { userName, userAccount, userAddress }
   }
@@ -59,7 +60,8 @@ class GetStream extends Writable {
       object: event.object,
       contentHash: event.contentHash,
       name: userName,
-      actor: userAccount
+      actor: userAccount,
+      foreign_id: `create_${event.object}`
     }
 
     await this.feed.addActivity(activity)
@@ -78,7 +80,8 @@ class GetStream extends Writable {
       contentHash: event.contentHash,
       previousLink: event.previousLink,
       name: userName,
-      actor: userAccount
+      actor: userAccount,
+      foreign_id: `update_${event.object}`
     }
 
     await this.feed.addActivity(activity)
@@ -95,7 +98,8 @@ class GetStream extends Writable {
       object: event.object,
       actor: userAccount,
       name: userName,
-      address: userAddress
+      address: userAddress,
+      foreign_id: `confirm_${event.object}`
     }
 
     await this.feed.addActivity(activity)
@@ -113,7 +117,8 @@ class GetStream extends Writable {
       amount: event.amount,
       actor: userAccount,
       name: userName,
-      address: userAddress
+      address: userAddress,
+      foreign_id: `support_${event.object}`
     }
 
     await this.feed.addActivity(activity)
@@ -144,7 +149,8 @@ class GetStream extends Writable {
       address: sponsorAddress,
       witness: witnessAccount,
       witnessName: witnessName,
-      witnessAddress: witnessAddress
+      witnessAddress: witnessAddress,
+      foreign_id: `deposit_${event.object}`
     }
 
     await this.feed.addActivity(activity)
@@ -175,7 +181,8 @@ class GetStream extends Writable {
       address: recipientAddress,
       witness: witnessAccount,
       witnessName: witnessName,
-      witnessAddress: witnessAddress
+      witnessAddress: witnessAddress,
+      foreign_id: `withdraw_${event.object}`
     }
 
     await this.feed.addActivity(activity)
@@ -191,8 +198,13 @@ class GetStream extends Writable {
       const eventName = event._eventName
 
       if (this.eventHandlers[eventName]) {
-        await this.eventHandlers[eventName](event)
-        callback()
+        try {
+          await this.eventHandlers[eventName](event)
+          callback()
+        } catch (e) {
+          console.error(e.message)
+          callback()
+        }
       }
     }
   }

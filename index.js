@@ -1,26 +1,30 @@
 require('dotenv').config()
 
 const { Qweb3 } = require('qweb3')
+const { Qtum } = require('qtumjs')
 const stream = require('getstream')
 
 const EventsStream = require('./EventsStream')
 const GetStream = require('./GetStream')
 
 const client = stream.connect(process.env.STREAM_KEY, process.env.STREAM_SECRET)
-const feed = client.feed(process.env.STREAM_TRANSACTIONS_GROUP, process.env.STREAM_TRANSACTIONS_FEED)
+const feed = client.feed(process.env.STREAM_ACHIEVEMENTS_GROUP, process.env.STREAM_ACHIEVEMENTS_GROUP)
 
 const qweb3 = new Qweb3(process.env.QTUM_RPC_ADDRESS)
 
 const qtumRepository = require('./solar.development.json')
+
+const qtum = new Qtum(process.env.QTUM_RPC_ADDRESS, qtumRepository)
+const users = qtum.contract('contracts/Users.sol')
 
 const metadata = []
 metadata.push(qtumRepository.contracts['contracts/Achievements.sol'])
 metadata.push(qtumRepository.contracts['contracts/Users.sol'])
 metadata.push(qtumRepository.contracts['contracts/Rewards.sol'])
 
-const USERS_ADDRESS = '631f3319692ca68145fd7e322016b43d5bc7713d'
-const ACHIEVEMENTS_ADDRESS = '9c5b1939802180082be705953b23085f6d4a40ef'
-const REWARDS_ADDRESS = '2e16be0ba07c05ba0cea3ce773fd89f8cd57dbaf'
+const USERS_ADDRESS = '39160eca6e4d767b536c8f4569f8124883ebc061'
+const ACHIEVEMENTS_ADDRESS = '847b66a424b3c20d5469ef754bcee21aae76b7b2'
+const REWARDS_ADDRESS = 'd0b651014ae8df23d81b1447eb0cf4810601fa39'
 
 const REGISTER_EVENT = 'f20b245a781ab35d1a9d5876c7d4fbf5e873637eb1358f3d5e5036ba473164b7'
 const CREATE_EVENT = '7bc59cc544d3629d5593a7a9acdf5c47341b7b5ddb657976540aee69c406b8f4'
@@ -30,13 +34,13 @@ const SUPPORT_EVENT = '261e0d0db30ffb35a16d91f81e5cf5ab8b9689c7f57abaddc664f6b28
 const DEPOSIT_EVENT = 'f49cd3f7cf3264bb3d8fab0bb2bff932d82884a6a76cd0fd0bf87f75307d404e'
 const WITHDRAW_EVENT = 'a07ba11b741df64fca8ef3b0cd4e4a4da6a481976bf4dd7db782835c2480f64a'
 
-const addresses = [USERS_ADDRESS, ACHIEVEMENTS_ADDRESS, REWARDS_ADDRESS]
-const topics = [CREATE_EVENT, UPDATE_EVENT, CONFIRM_EVENT, SUPPORT_EVENT, DEPOSIT_EVENT, WITHDRAW_EVENT, REGISTER_EVENT]
+const addresses = [ACHIEVEMENTS_ADDRESS]
+const topics = [CREATE_EVENT, UPDATE_EVENT]
 
 const startBlock = 0
 
 const reduce = () => {
   (new EventsStream(qweb3, addresses, topics, metadata, startBlock))
-    .pipe(new GetStream(feed))
+    .pipe(new GetStream(feed, users))
 }
 reduce()

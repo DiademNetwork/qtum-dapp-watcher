@@ -10,8 +10,6 @@ class EventsStream extends Readable {
     const loadEvents = async (fromBlock, toBlock) => {
       const events = await qweb3.searchLogs(fromBlock, toBlock, addresses, topics, metadata, true)
 
-      console.log('events', events)
-
       for (const event of events) {
         if (!this.push(event)) {
           await new Promise(resolve => this._resume = resolve)
