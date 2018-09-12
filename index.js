@@ -18,13 +18,18 @@ const qtum = new Qtum(process.env.QTUM_RPC_ADDRESS, qtumRepository)
 const users = qtum.contract('contracts/Users.sol')
 
 const metadata = []
-metadata.push(qtumRepository.contracts['contracts/Achievements.sol'])
-metadata.push(qtumRepository.contracts['contracts/Users.sol'])
-metadata.push(qtumRepository.contracts['contracts/Rewards.sol'])
 
-const USERS_ADDRESS = '39160eca6e4d767b536c8f4569f8124883ebc061'
-const ACHIEVEMENTS_ADDRESS = '847b66a424b3c20d5469ef754bcee21aae76b7b2'
-const REWARDS_ADDRESS = 'd0b651014ae8df23d81b1447eb0cf4810601fa39'
+const usersContract = qtumRepository.contracts['contracts/Users.sol']
+const achievementsContract = qtumRepository.contracts['contracts/Achievements.sol']
+const rewardsContract = qtumRepository.contracts['contracts/Rewards.sol']
+
+metadata.push(achievementsContract)
+metadata.push(usersContract)
+metadata.push(rewardsContract)
+
+const USERS_ADDRESS = usersContract.address
+const ACHIEVEMENTS_ADDRESS = achievementsContract.address
+const REWARDS_ADDRESS = rewardsContract.address
 
 const REGISTER_EVENT = 'f20b245a781ab35d1a9d5876c7d4fbf5e873637eb1358f3d5e5036ba473164b7'
 const CREATE_EVENT = '7bc59cc544d3629d5593a7a9acdf5c47341b7b5ddb657976540aee69c406b8f4'
