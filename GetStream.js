@@ -165,12 +165,6 @@ class GetStream extends Writable {
       userAddress: witnessAddress
     } = this.getUser(event.witness)
 
-    const {
-      userAccount: sponsorAccount,
-      userName: sponsorName,
-      userAddress: sponsorAddress
-    } = this.getUser(event.user)
-
     const activity = {
       verb: 'withdraw',
       wallet: event.wallet,
@@ -181,10 +175,7 @@ class GetStream extends Writable {
       address: recipientAddress,
       witness: witnessAccount,
       witnessName: witnessName,
-      witnessAddress: witnessAddress,
-      sponsor: sponsorAccount,
-      sponsorName: sponsorName,
-      sponsorAddress: sponsorAddress
+      witnessAddress: witnessAddress
     }
 
     await this.feed.addActivity(activity)
