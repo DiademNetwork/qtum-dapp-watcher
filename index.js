@@ -1,8 +1,13 @@
 require('dotenv').config()
 
 const { Qweb3 } = require('qweb3')
+const stream = require('getstream')
+
 const EventsStream = require('./EventsStream')
 const GetStream = require('./GetStream')
+
+const client = stream.connect(process.env.STREAM_KEY, process.env.STREAM_SECRET)
+const feed = client.feed(process.env.STREAM_TRANSACTIONS_GROUP, process.env.STREAM_TRANSACTIONS_FEED)
 
 const qweb3 = new Qweb3(process.env.QTUM_RPC_ADDRESS)
 
@@ -31,6 +36,6 @@ const startBlock = 0
 
 const reduce = () => {
   (new EventsStream(qweb3, addresses, topics, metadata, startBlock))
-    .pipe(new GetStream())
+    .pipe(new GetStream(feed))
 }
 reduce()
