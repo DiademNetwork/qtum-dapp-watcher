@@ -1,7 +1,30 @@
 const { Writable } = require('stream')
 
+/*
+    f20b245a781ab35d1a9d5876c7d4fbf5e873637eb1358f3d5e5036ba473164b7
+    event Register(address _userAddress, string _userAccount, string _userName);
+
+    7bc59cc544d3629d5593a7a9acdf5c47341b7b5ddb657976540aee69c406b8f4
+    event Create(address wallet, string object, string title, bytes32 contentHash);
+
+    50c6b2b9edb343ed62d7689f861bf4bd7e9281efddd632a4e98c0212495aea0c
+    event Update(address wallet, string object, string title, bytes32 contentHash, string previousLink);
+
+    44cd04f736ad09845a66019a358898aacdd64afdc1e497dea7cc83f6d81036df
+    event Confirm(address wallet, string object, address user);
+
+    261e0d0db30ffb35a16d91f81e5cf5ab8b9689c7f57abaddc664f6b287037d95
+    event Support(address wallet, string object, address user, uint256 amount);
+
+    f49cd3f7cf3264bb3d8fab0bb2bff932d82884a6a76cd0fd0bf87f75307d404e
+    event Deposit(address wallet, string object, address user, uint256 amount, address witness);
+
+    3ea94497887ad4c70fc4ff8baff84dcfcec6280724df4a61cb094e2d0ea9d5bf
+    event Withdraw(address wallet, string object, address user, uint256 amount, address witness);
+ */
+
 class GetStream extends Writable {
-  constructor(feed) {
+  constructor(feed, users) {
     super({ objectMode: true })
 
     this.feed = feed
@@ -11,33 +34,164 @@ class GetStream extends Writable {
       'Update': this.updateAchievement,
       'Confirm': this.confirmAchievement,
       'Support': this.supportAchievement,
-      'Deposit': this.depositReward
+      'Deposit': this.depositReward,
+      'Withdraw': this.withdrawReward,
+      'Register': this.registerUser
     }
+  }
+
+  async getUser(address) {
+    const [ userName, userAccount, userAddress ] =
+      (await users.call('getUser', [address])).outputs
+
+    return { userName, userAccount, userAddress }
   }
 
   async createAchievement(event) {
     console.log('createAchievement', event)
-    await this.feed.addActivity(event)
+
+    const { userName, userAccount } = await this.getUser(event.wallet)
+
+    const activity = {
+      verb: 'create',
+      title: event.title,
+      wallet: event.wallet,
+      object: event.object,
+      contentHash: event.contentHash,
+      name: userName,
+      actor: userAccount
+    }
+
+    await this.feed.addActivity(activity)
   }
 
   async updateAchievement(event) {
     console.log('updateAchievement', event)
-    await this.feed.addActivity(event)
+
+    const { userName, userAccount } = await this.getUser(event.wallet)
+
+    const activity = {
+      verb: 'update',
+      title: event.title,
+      wallet: event.wallet,
+      object: event.object,
+      contentHash: event.contentHash,
+      previousLink: event.previousLink,
+      name: userName,
+      actor: userAccount
+    }
+
+    await this.feed.addActivity(activity)
   }
 
   async confirmAchievement(event) {
     console.log('confirmAchievement', event)
-    await this.feed.addActivity(event)
+
+    const { userAccount, userName, userAddress } = await this.getUser(event.user)
+
+    const activity = {
+      verb: 'confirm',
+      wallet: event.wallet,
+      object: event.object,
+      actor: userAccount,
+      name: userName,
+      address: userAddress
+    }
+
+    await this.feed.addActivity(activity)
   }
 
   async supportAchievement(event) {
     console.log('supportAchievement', event)
-    await this.feed.addActivity(event)
+
+    const { userAccount, userName, userAddress } = await this.getUser(event.user)
+
+    const activity = {
+      verb: 'support',
+      wallet: event.wallet,
+      object: event.object,
+      amount: event.amount,
+      actor: userAccount,
+      name: userName,
+      address: userAddress
+    }
+
+    await this.feed.addActivity(activity)
   }
 
   async depositReward(event) {
     console.log('depositReward', event)
-    await this.feed.addActivity(event)
+
+    const {
+      userAccount: sponsorAccount,
+      userName: sponsorName,
+      userAddress: sponsorAddress
+    } = await this.getUser(event.user)
+
+    const {
+      userAccount: witnessAccount,
+      userName: witnessName,
+      userAddress: wintessAddress
+    } = await this.getUser(event.witness)
+
+    const activity = {
+      verb: 'deposit',
+      wallet: event.wallet,
+      object: event.object,
+      amount: event.amount,
+      actor: sponsorAccount,
+      name: sponsorName,
+      address: sponsorAddress,
+      witness: witnessAccount,
+      witnessName: witnessName,
+      witnessAddress: witnessAddress
+    }
+
+    await this.feed.addActivity(activity)
+  }
+
+  async withdrawReward(event) {
+    console.log('withdrawReward', event)
+
+    const {
+      userAccount: recipientAccount,
+      userName: recipientName,
+      userAddress: recipientAddress
+    } = this.getUser(event.wallet)
+
+    const {
+      userAccount: witnessAccount,
+      userName: witnessName,
+      userAddress: witnessAddress
+    } = this.getUser(event.witness)
+
+    const {
+      userAccount: sponsorAccount,
+      userName: sponsorName,
+      userAddress: sponsorAddress
+    } = this.getUser(event.user)
+
+    const activity = {
+      verb: 'withdraw',
+      wallet: event.wallet,
+      object: event.wallet,
+      amount: event.amount,
+      actor: recipientAccount,
+      name: recipientName,
+      address: recipientAddress,
+      witness: witnessAccount,
+      witnessName: witnessName,
+      witnessAddress: witnessAddress,
+      sponsor: sponsorAccount,
+      sponsorName: sponsorName,
+      sponsorAddress: sponsorAddress
+    }
+
+    await this.feed.addActivity(activity)
+  }
+
+  async registerUser(event) {
+    console.log('registerUser', event)
   }
 
   async _write(chunk, encoding, callback) {
