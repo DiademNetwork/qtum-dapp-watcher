@@ -24,11 +24,12 @@ const { Writable } = require('stream')
  */
 
 class GetStream extends Writable {
-  constructor(feed, users) {
+  constructor(feed, users, qweb3) {
     super({ objectMode: true })
 
     this.feed = feed
     this.users = users
+    this.qweb3 = qweb3
 
     this.eventHandlers = {
       'Create': this.createAchievement.bind(this),
@@ -51,12 +52,13 @@ class GetStream extends Writable {
   async createAchievement(event, time) {
     console.log('createAchievement', event)
 
-    const { userName, userAccount } = await this.getUser(event.wallet)
+    const { userName, userAccount, userAddress } = await this.getUser(event.wallet)
+    const qtumAddress = await this.qweb3.fromHexAddress(userAddress)
 
     const activity = {
       verb: 'create',
       title: event.title,
-      wallet: event.wallet,
+      wallet: qtumAddress,
       object: event.object,
       contentHash: event.contentHash,
       name: userName,
@@ -71,12 +73,13 @@ class GetStream extends Writable {
   async updateAchievement(event, time) {
     console.log('updateAchievement', event)
 
-    const { userName, userAccount } = await this.getUser(event.wallet)
+    const { userName, userAccount, userAddress } = await this.getUser(event.wallet)
+    const qtumAddress = await this.qweb3.fromHexAddress(userAddress)
 
     const activity = {
       verb: 'update',
       title: event.title,
-      wallet: event.wallet,
+      wallet: qtumAddress,
       object: event.object,
       contentHash: event.contentHash,
       previousLink: event.previousLink,
@@ -93,10 +96,11 @@ class GetStream extends Writable {
     console.log('confirmAchievement', event)
 
     const { userAccount, userName, userAddress } = await this.getUser(event.user)
+    const qtumAddress = await this.qweb3.fromHexAddress(userAddress)
 
     const activity = {
       verb: 'confirm',
-      wallet: event.wallet,
+      wallet: qtumAddress,
       object: event.object,
       actor: userAccount,
       name: userName,
@@ -112,10 +116,11 @@ class GetStream extends Writable {
     console.log('supportAchievement', event)
 
     const { userAccount, userName, userAddress } = await this.getUser(event.user)
+    const qtumAddress = await this.qweb3.fromHexAddress(userAddress)
 
     const activity = {
       verb: 'support',
-      wallet: event.wallet,
+      wallet: qtumAddress,
       object: event.object,
       amount: event.amount,
       actor: userAccount,
@@ -136,12 +141,14 @@ class GetStream extends Writable {
       userName: sponsorName,
       userAddress: sponsorAddress
     } = await this.getUser(event.user)
+    const qtumAddressSponsor = await this.qweb3.fromHexAddress(sponsorAddress)
 
     const {
       userAccount: witnessAccount,
       userName: witnessName,
-      userAddress: wintessAddress
+      userAddress: witnessAddress
     } = await this.getUser(event.witness)
+    const qtumAddressWitness = await this.qweb3.fromHexAddress(witnessAddress)
 
     const activity = {
       verb: 'deposit',
@@ -150,10 +157,10 @@ class GetStream extends Writable {
       amount: event.amount,
       actor: sponsorAccount,
       name: sponsorName,
-      address: sponsorAddress,
+      address: qtumAddressSponsor,
       witness: witnessAccount,
       witnessName: witnessName,
-      witnessAddress: witnessAddress,
+      witnessAddress: qtumAddressWitness,
       foreign_id: `deposit_${event.object}`,
       time: time
     }
@@ -169,12 +176,14 @@ class GetStream extends Writable {
       userName: recipientName,
       userAddress: recipientAddress
     } = this.getUser(event.wallet)
+    const qtumAddressRecipient = await this.qweb3.fromHexAddress(recipientAddress)
 
     const {
       userAccount: witnessAccount,
       userName: witnessName,
       userAddress: witnessAddress
     } = this.getUser(event.witness)
+    const qtumAddressWitness = await this.qweb3.fromHexAddress(witnessAddress)
 
     const activity = {
       verb: 'withdraw',
@@ -183,10 +192,10 @@ class GetStream extends Writable {
       amount: event.amount,
       actor: recipientAccount,
       name: recipientName,
-      address: recipientAddress,
+      address: qtumAddressRecipient,
       witness: witnessAccount,
       witnessName: witnessName,
-      witnessAddress: witnessAddress,
+      witnessAddress: qtumAddressWitness,
       foreign_id: `withdraw_${event.object}`,
       time: time
     }

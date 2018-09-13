@@ -10,12 +10,10 @@ const GetStream = require('./GetStream')
 const client = stream.connect(process.env.STREAM_KEY, process.env.STREAM_SECRET)
 const feed = client.feed(process.env.STREAM_ACHIEVEMENTS_GROUP, process.env.STREAM_ACHIEVEMENTS_FEED)
 
-const qweb3 = new Qweb3(process.env.QTUM_RPC_ADDRESS)
-
 const qtumRepository = require('./solar.development.json')
-
 const qtum = new Qtum(process.env.QTUM_RPC_ADDRESS, qtumRepository)
 const users = qtum.contract('contracts/Users.sol')
+const qweb3 = new Qweb3(process.env.QTUM_RPC_ADDRESS)
 
 const USERS_CONTRACT = qtumRepository.contracts['contracts/Users.sol']
 const ACHIEVEMENTS_CONTRACT = qtumRepository.contracts['contracts/Achievements.sol']
@@ -78,6 +76,6 @@ const startBlock = 0
 
 const reduce = () => {
   (new EventsStream(qweb3, processes, startBlock))
-    .pipe(new GetStream(feed, users))
+    .pipe(new GetStream(feed, users, qweb3))
 }
 reduce()
