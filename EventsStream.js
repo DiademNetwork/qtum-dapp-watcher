@@ -3,17 +3,17 @@ const { Readable } = require('stream');
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
 class EventsStream extends Readable {
-  constructor(qweb3, addresses, topics, metadata, startBlock) {
+  constructor(qweb3, processes, startBlock) {
 
     super({ objectMode: true })
 
-    const loadEvents = async (fromBlock, toBlock) => {
-      const events = await qweb3.searchLogs(fromBlock, toBlock, addresses, topics, metadata, true)
+    const loadEvents = async (fromBlock, toBlock, processAddresses, processTopics, processMetadata, name) => {
+      const events = await qweb3.searchLogs(fromBlock, toBlock, processAddresses, processTopics, processMetadata, true)
+
+      console.log(`${name} ${toBlock}: `, events.length)
 
       for (const event of events) {
-        if (!this.push(event)) {
-          await new Promise(resolve => this._resume = resolve)
-        }
+        this.push(event)
       }
     }
 
@@ -23,7 +23,9 @@ class EventsStream extends Readable {
       let fromBlock = startBlock
       let toBlock = blockNumber
 
-      await loadEvents(fromBlock, toBlock)
+      for (const process of processes) {
+        await loadEvents(fromBlock, toBlock, process.addresses, process.topics, process.metadata, process.name)
+      }
 
       while (true) {
         const blockNumber = await qweb3.getBlockCount()
@@ -31,7 +33,10 @@ class EventsStream extends Readable {
         if (blockNumber > toBlock) {
           fromBlock = toBlock + 1
           toBlock = blockNumber
-          await loadEvents(fromBlock, toBlock)
+
+          for (const process of processes) {
+            await loadEvents(fromBlock, toBlock, process.addresses, process.topics, process.metadata, process.name)
+          }
         } else {
           await sleep(1000)
         }
@@ -40,9 +45,6 @@ class EventsStream extends Readable {
   }
 
   _read() {
-    const resume = this._resume
-    delete this._resume
-    resume && resume()
   }
 }
 

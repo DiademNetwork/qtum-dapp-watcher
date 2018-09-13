@@ -8,7 +8,7 @@ const EventsStream = require('./EventsStream')
 const GetStream = require('./GetStream')
 
 const client = stream.connect(process.env.STREAM_KEY, process.env.STREAM_SECRET)
-const feed = client.feed(process.env.STREAM_ACHIEVEMENTS_GROUP, process.env.STREAM_ACHIEVEMENTS_GROUP)
+const feed = client.feed(process.env.STREAM_ACHIEVEMENTS_GROUP, process.env.STREAM_ACHIEVEMENTS_FEED)
 
 const qweb3 = new Qweb3(process.env.QTUM_RPC_ADDRESS)
 
@@ -17,19 +17,13 @@ const qtumRepository = require('./solar.development.json')
 const qtum = new Qtum(process.env.QTUM_RPC_ADDRESS, qtumRepository)
 const users = qtum.contract('contracts/Users.sol')
 
-const metadata = []
+const USERS_CONTRACT = qtumRepository.contracts['contracts/Users.sol']
+const ACHIEVEMENTS_CONTRACT = qtumRepository.contracts['contracts/Achievements.sol']
+const REWARDS_CONTRACT = qtumRepository.contracts['contracts/Rewards.sol']
 
-const usersContract = qtumRepository.contracts['contracts/Users.sol']
-const achievementsContract = qtumRepository.contracts['contracts/Achievements.sol']
-const rewardsContract = qtumRepository.contracts['contracts/Rewards.sol']
-
-metadata.push(achievementsContract)
-metadata.push(usersContract)
-metadata.push(rewardsContract)
-
-const USERS_ADDRESS = usersContract.address
-const ACHIEVEMENTS_ADDRESS = achievementsContract.address
-const REWARDS_ADDRESS = rewardsContract.address
+const USERS_ADDRESS = USERS_CONTRACT.address
+const ACHIEVEMENTS_ADDRESS = ACHIEVEMENTS_CONTRACT.address
+const REWARDS_ADDRESS = REWARDS_CONTRACT.address
 
 const REGISTER_EVENT = 'f20b245a781ab35d1a9d5876c7d4fbf5e873637eb1358f3d5e5036ba473164b7'
 const CREATE_EVENT = '7bc59cc544d3629d5593a7a9acdf5c47341b7b5ddb657976540aee69c406b8f4'
@@ -39,13 +33,31 @@ const SUPPORT_EVENT = '261e0d0db30ffb35a16d91f81e5cf5ab8b9689c7f57abaddc664f6b28
 const DEPOSIT_EVENT = 'f49cd3f7cf3264bb3d8fab0bb2bff932d82884a6a76cd0fd0bf87f75307d404e'
 const WITHDRAW_EVENT = 'a07ba11b741df64fca8ef3b0cd4e4a4da6a481976bf4dd7db782835c2480f64a'
 
-const addresses = [ACHIEVEMENTS_ADDRESS]
-const topics = [CREATE_EVENT, UPDATE_EVENT]
+const metadata = [USERS_CONTRACT, ACHIEVEMENTS_CONTRACT, REWARDS_CONTRACT]
+const addresses = [[USERS_ADDRESS], [ACHIEVEMENTS_ADDRESS], [REWARDS_ADDRESS]]
+const topics = [[REGISTER_EVENT], [CREATE_EVENT, UPDATE_EVENT, CONFIRM_EVENT], [SUPPORT_EVENT, DEPOSIT_EVENT, WITHDRAW_EVENT]]
+
+const processes = [{
+  name: 'USERS',
+  metadata: [USERS_CONTRACT],
+  addresses: [USERS_ADDRESS],
+  topics: [REGISTER_EVENT]
+}, {
+  name: 'ACHIEVEMENTS',
+  metadata: [ACHIEVEMENTS_CONTRACT],
+  addresses: [ACHIEVEMENTS_ADDRESS],
+  topics: [CREATE_EVENT, UPDATE_EVENT, CONFIRM_EVENT]
+}, {
+  name: 'REWARDS',
+  metadata: [REWARDS_CONTRACT],
+  addresses: [REWARDS_ADDRESS],
+  topics: [SUPPORT_EVENT, DEPOSIT_EVENT, WITHDRAW_EVENT]
+}]
 
 const startBlock = 0
 
 const reduce = () => {
-  (new EventsStream(qweb3, addresses, topics, metadata, startBlock))
+  (new EventsStream(qweb3, processes, startBlock))
     .pipe(new GetStream(feed, users))
 }
 reduce()
