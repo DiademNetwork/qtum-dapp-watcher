@@ -42,7 +42,7 @@ class GetStream extends Writable {
   }
 
   async getUser(address) {
-    const [ userName, userAccount, userAddress ] =
+    const [ userAddress, userAccount, userName ] =
       (await this.users.call('getUser', [address])).outputs
 
     return { userName, userAccount, userAddress }
