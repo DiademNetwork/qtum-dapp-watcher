@@ -7,8 +7,8 @@ class EventsStream extends Readable {
 
     super({ objectMode: true })
 
-    const loadEvents = async (fromBlock, toBlock, processAddresses, processTopics, processMetadata, name) => {
-      const events = await qweb3.searchLogs(fromBlock, toBlock, processAddresses, processTopics, processMetadata, true)
+    const loadEvents = async (fromBlock, toBlock, address, topic, metadata, name) => {
+      const events = await qweb3.searchLogs(fromBlock, toBlock, [address], [topic], [metadata], true)
 
       console.log(`${name} ${toBlock}: `, events.length)
 
@@ -24,7 +24,7 @@ class EventsStream extends Readable {
       let toBlock = blockNumber
 
       for (const process of processes) {
-        await loadEvents(fromBlock, toBlock, process.addresses, process.topics, process.metadata, process.name)
+        await loadEvents(fromBlock, toBlock, process.address, process.topic, process.metadata, process.name)
       }
 
       while (true) {
@@ -35,7 +35,7 @@ class EventsStream extends Readable {
           toBlock = blockNumber
 
           for (const process of processes) {
-            await loadEvents(fromBlock, toBlock, process.addresses, process.topics, process.metadata, process.name)
+            await loadEvents(fromBlock, toBlock, process.address, process.topic, process.metadata, process.name)
           }
         } else {
           await sleep(1000)

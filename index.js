@@ -38,20 +38,40 @@ const addresses = [[USERS_ADDRESS], [ACHIEVEMENTS_ADDRESS], [REWARDS_ADDRESS]]
 const topics = [[REGISTER_EVENT], [CREATE_EVENT, UPDATE_EVENT, CONFIRM_EVENT], [SUPPORT_EVENT, DEPOSIT_EVENT, WITHDRAW_EVENT]]
 
 const processes = [{
-  name: 'USERS',
-  metadata: [USERS_CONTRACT],
-  addresses: [USERS_ADDRESS],
-  topics: [REGISTER_EVENT]
+  name: 'Register',
+  metadata: USERS_CONTRACT,
+  address: USERS_ADDRESS,
+  topic: REGISTER_EVENT
 }, {
-  name: 'ACHIEVEMENTS',
-  metadata: [ACHIEVEMENTS_CONTRACT],
-  addresses: [ACHIEVEMENTS_ADDRESS],
-  topics: [CREATE_EVENT, UPDATE_EVENT, CONFIRM_EVENT]
+  name: 'Create',
+  metadata: ACHIEVEMENTS_CONTRACT,
+  address: ACHIEVEMENTS_ADDRESS,
+  topic: CREATE_EVENT
 }, {
-  name: 'REWARDS',
-  metadata: [REWARDS_CONTRACT],
-  addresses: [REWARDS_ADDRESS],
-  topics: [SUPPORT_EVENT, DEPOSIT_EVENT, WITHDRAW_EVENT]
+  name: 'Update',
+  metadata: ACHIEVEMENTS_CONTRACT,
+  address: ACHIEVEMENTS_ADDRESS,
+  topic: UPDATE_EVENT
+}, {
+  name: 'Confirm',
+  metadata: ACHIEVEMENTS_CONTRACT,
+  address: ACHIEVEMENTS_ADDRESS,
+  topic: CONFIRM_EVENT
+}, {
+  name: 'Support',
+  metadata: REWARDS_CONTRACT,
+  address: REWARDS_ADDRESS,
+  topic: SUPPORT_EVENT
+}, {
+  name: 'Deposit',
+  metadata: REWARDS_CONTRACT,
+  address: REWARDS_ADDRESS,
+  topic: DEPOSIT_EVENT
+}, {
+  name: 'Withdraw',
+  metadata: REWARDS_CONTRACT,
+  address: REWARDS_ADDRESS,
+  topic: WITHDRAW_EVENT
 }]
 
 const startBlock = 0
