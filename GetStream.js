@@ -48,7 +48,7 @@ class GetStream extends Writable {
     return { userName, userAccount, userAddress }
   }
 
-  async createAchievement(event) {
+  async createAchievement(event, time) {
     console.log('createAchievement', event)
 
     const { userName, userAccount } = await this.getUser(event.wallet)
@@ -61,13 +61,14 @@ class GetStream extends Writable {
       contentHash: event.contentHash,
       name: userName,
       actor: userAccount,
-      foreign_id: `create_${event.object}`
+      foreign_id: `create_${event.object}`,
+      time: time
     }
 
     await this.feed.addActivity(activity)
   }
 
-  async updateAchievement(event) {
+  async updateAchievement(event, time) {
     console.log('updateAchievement', event)
 
     const { userName, userAccount } = await this.getUser(event.wallet)
@@ -81,13 +82,14 @@ class GetStream extends Writable {
       previousLink: event.previousLink,
       name: userName,
       actor: userAccount,
-      foreign_id: `update_${event.object}`
+      foreign_id: `update_${event.object}`,
+      time: time
     }
 
     await this.feed.addActivity(activity)
   }
 
-  async confirmAchievement(event) {
+  async confirmAchievement(event, time) {
     console.log('confirmAchievement', event)
 
     const { userAccount, userName, userAddress } = await this.getUser(event.user)
@@ -99,13 +101,14 @@ class GetStream extends Writable {
       actor: userAccount,
       name: userName,
       address: userAddress,
-      foreign_id: `confirm_${event.object}`
+      foreign_id: `confirm_${event.object}`,
+      time: time
     }
 
     await this.feed.addActivity(activity)
   }
 
-  async supportAchievement(event) {
+  async supportAchievement(event, time) {
     console.log('supportAchievement', event)
 
     const { userAccount, userName, userAddress } = await this.getUser(event.user)
@@ -118,13 +121,14 @@ class GetStream extends Writable {
       actor: userAccount,
       name: userName,
       address: userAddress,
-      foreign_id: `support_${event.object}`
+      foreign_id: `support_${event.object}`,
+      time: time
     }
 
     await this.feed.addActivity(activity)
   }
 
-  async depositReward(event) {
+  async depositReward(event, time) {
     console.log('depositReward', event)
 
     const {
@@ -150,13 +154,14 @@ class GetStream extends Writable {
       witness: witnessAccount,
       witnessName: witnessName,
       witnessAddress: witnessAddress,
-      foreign_id: `deposit_${event.object}`
+      foreign_id: `deposit_${event.object}`,
+      time: time
     }
 
     await this.feed.addActivity(activity)
   }
 
-  async withdrawReward(event) {
+  async withdrawReward(event, time) {
     console.log('withdrawReward', event)
 
     const {
@@ -182,7 +187,8 @@ class GetStream extends Writable {
       witness: witnessAccount,
       witnessName: witnessName,
       witnessAddress: witnessAddress,
-      foreign_id: `withdraw_${event.object}`
+      foreign_id: `withdraw_${event.object}`,
+      time: time
     }
 
     await this.feed.addActivity(activity)
@@ -196,10 +202,14 @@ class GetStream extends Writable {
     if (chunk.log && chunk.log[0]) {
       const event = chunk.log[0]
       const eventName = event._eventName
+      const gasUsed = chunk.gasUsed
+
+      console.log(`${eventName} gas: ${gasUsed}`)
 
       if (this.eventHandlers[eventName]) {
         try {
-          await this.eventHandlers[eventName](event)
+          const time = new Date(chunk.blockNumber) // to enforce uniqueness in feed
+          await this.eventHandlers[eventName](event, time)
           callback()
         } catch (e) {
           console.error(e.message)
