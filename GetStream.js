@@ -95,16 +95,31 @@ class GetStream extends Writable {
   async confirmAchievement(event, time) {
     console.log('confirmAchievement', event)
 
-    const { userAccount, userName, userAddress } = await this.getUser(event.user)
-    const qtumAddress = await this.qweb3.fromHexAddress(userAddress)
+    const {
+      userAccount: creatorAccount,
+      userName: creatorName,
+      userAddress: creatorAddress
+    } = await this.getUser(event.wallet)
+
+    const {
+      userAccount: witnessAccount,
+      userName: witnessName,
+      userAddress: witnessAddress
+    } = await this.getUser(event.user)
+
+    const creatorQtumAddress = await this.qweb3.fromHexAddress(creatorAddress)
+    const witnessQtumAddress = await this.qweb3.fromHexAddress(witnessAddress)
 
     const activity = {
       verb: 'confirm',
-      wallet: qtumAddress,
+      wallet: creatorQtumAddress,
       object: event.object,
-      actor: userAccount,
-      name: userName,
-      address: userAddress,
+      actor: creatorAccount,
+      name: creatorName,
+      address: creatorQtumAddress,
+      witness: witnessAccount,
+      witnessName: witnessName,
+      witnessAddress: witnessQtumAddress,
       foreign_id: `confirm_${event.object}`,
       time: time
     }
