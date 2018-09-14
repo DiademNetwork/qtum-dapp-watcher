@@ -80,6 +80,8 @@ class GetStream extends Writable {
       verb: 'update',
       title: event.title,
       wallet: qtumAddress,
+      creatorName: userName,
+      creatorAccount: userAccount,
       object: event.object,
       contentHash: event.contentHash,
       previousLink: event.previousLink,
@@ -113,10 +115,12 @@ class GetStream extends Writable {
     const activity = {
       verb: 'confirm',
       wallet: creatorQtumAddress,
+      creatorName: creatorName,
+      creatorAccount: creatorAccount,
       object: event.object,
-      actor: creatorAccount,
-      name: creatorName,
-      address: creatorQtumAddress,
+      actor: witnessAccount,
+      name: witnessName,
+      address: witnessQtumAddress,
       witness: witnessAccount,
       witnessName: witnessName,
       witnessAddress: witnessQtumAddress,
@@ -130,17 +134,31 @@ class GetStream extends Writable {
   async supportAchievement(event, time) {
     console.log('supportAchievement', event)
 
-    const { userAccount, userName, userAddress } = await this.getUser(event.user)
-    const qtumAddress = await this.qweb3.fromHexAddress(userAddress)
+    const {
+      userAccount: creatorAccount,
+      userName: creatorName,
+      userAddress: creatorAddress
+    } = await this.getUser(event.wallet)
+
+    const {
+      userAccount: sponsorAccount,
+      userName: sponsorName,
+      userAddress: sponsorAddress
+    } = await this.getUser(event.user)
+
+    const creatorQtumAddress = await this.qweb3.fromHexAddress(creatorAddress)
+    const sponsorQtumAddress = await this.qweb3.fromHexAddress(sponsorAddress)
 
     const activity = {
       verb: 'support',
-      wallet: qtumAddress,
+      wallet: creatorQtumAddress,
+      creatorName: creatorName,
+      creatorAccount: creatorAccount,
       object: event.object,
       amount: event.amount,
-      actor: userAccount,
-      name: userName,
-      address: userAddress,
+      actor: sponsorAccount,
+      name: sponsorName,
+      address: sponsorQtumAddress,
       foreign_id: `support_${event.object}`,
       time: time
     }
@@ -150,6 +168,13 @@ class GetStream extends Writable {
 
   async depositReward(event, time) {
     console.log('depositReward', event)
+
+    const {
+      userAccount: creatorAccount,
+      userName: creatorName,
+      userAddress: creatorAddress
+    } = await this.getUser(event.wallet)
+    const qtumAddressCreator = await this.qweb3.fromHexAddress(creatorAddress)
 
     const {
       userAccount: sponsorAccount,
@@ -167,7 +192,9 @@ class GetStream extends Writable {
 
     const activity = {
       verb: 'deposit',
-      wallet: event.wallet,
+      wallet: qtumAddressCreator,
+      creatorName: creatorName,
+      creatorAccount: creatorAccount,
       object: event.object,
       amount: event.amount,
       actor: sponsorAccount,
@@ -187,27 +214,36 @@ class GetStream extends Writable {
     console.log('withdrawReward', event)
 
     const {
-      userAccount: recipientAccount,
-      userName: recipientName,
-      userAddress: recipientAddress
-    } = this.getUser(event.wallet)
-    const qtumAddressRecipient = await this.qweb3.fromHexAddress(recipientAddress)
+      userAccount: creatorAccount,
+      userName: creatorName,
+      userAddress: creatorAddress
+    } = await this.getUser(event.wallet)
+    const qtumAddressCreator = await this.qweb3.fromHexAddress(creatorAddress)
+
+    const {
+      userAccount: sponsorAccount,
+      userName: sponsorName,
+      userAddress: sponsorAddress
+    } = await this.getUser(event.user)
+    const qtumAddressSponsor = await this.qweb3.fromHexAddress(sponsorAddress)
 
     const {
       userAccount: witnessAccount,
       userName: witnessName,
       userAddress: witnessAddress
-    } = this.getUser(event.witness)
+    } = await this.getUser(event.witness)
     const qtumAddressWitness = await this.qweb3.fromHexAddress(witnessAddress)
 
     const activity = {
       verb: 'withdraw',
-      wallet: event.wallet,
+      wallet: qtumAddressCreator,
+      creatorName: creatorName,
+      creatorAccount: creatorAccount,
       object: event.wallet,
       amount: event.amount,
-      actor: recipientAccount,
-      name: recipientName,
-      address: qtumAddressRecipient,
+      actor: sponsorAccount,
+      name: sponsorName,
+      address: qtumAddressSponsor,
       witness: witnessAccount,
       witnessName: witnessName,
       witnessAddress: qtumAddressWitness,
