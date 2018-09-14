@@ -49,7 +49,7 @@ class GetStream extends Writable {
     return { userName, userAccount, userAddress }
   }
 
-  async createAchievement(event, time) {
+  async createAchievement(event, time, target) {
     console.log('createAchievement', event)
 
     const { userName, userAccount, userAddress } = await this.getUser(event.wallet)
@@ -57,6 +57,7 @@ class GetStream extends Writable {
 
     const activity = {
       verb: 'create',
+      target: target,
       title: event.title,
       wallet: qtumAddress,
       object: event.object,
@@ -70,7 +71,7 @@ class GetStream extends Writable {
     await this.feed.addActivity(activity)
   }
 
-  async updateAchievement(event, time) {
+  async updateAchievement(event, time, target) {
     console.log('updateAchievement', event)
 
     const { userName, userAccount, userAddress } = await this.getUser(event.wallet)
@@ -78,6 +79,7 @@ class GetStream extends Writable {
 
     const activity = {
       verb: 'update',
+      target: target,
       title: event.title,
       wallet: qtumAddress,
       creatorName: userName,
@@ -94,7 +96,7 @@ class GetStream extends Writable {
     await this.feed.addActivity(activity)
   }
 
-  async confirmAchievement(event, time) {
+  async confirmAchievement(event, time, target) {
     console.log('confirmAchievement', event)
 
     const {
@@ -114,6 +116,7 @@ class GetStream extends Writable {
 
     const activity = {
       verb: 'confirm',
+      target: target,
       wallet: creatorQtumAddress,
       creatorName: creatorName,
       creatorAccount: creatorAccount,
@@ -131,7 +134,7 @@ class GetStream extends Writable {
     await this.feed.addActivity(activity)
   }
 
-  async supportAchievement(event, time) {
+  async supportAchievement(event, time, target) {
     console.log('supportAchievement', event)
 
     const {
@@ -151,11 +154,12 @@ class GetStream extends Writable {
 
     const activity = {
       verb: 'support',
+      target: target,
       wallet: creatorQtumAddress,
       creatorName: creatorName,
       creatorAccount: creatorAccount,
       object: event.object,
-      amount: event.amount,
+      amount: event.amount.toNumber(),
       actor: sponsorAccount,
       name: sponsorName,
       address: sponsorQtumAddress,
@@ -166,7 +170,7 @@ class GetStream extends Writable {
     await this.feed.addActivity(activity)
   }
 
-  async depositReward(event, time) {
+  async depositReward(event, time, target) {
     console.log('depositReward', event)
 
     const {
@@ -192,11 +196,12 @@ class GetStream extends Writable {
 
     const activity = {
       verb: 'deposit',
+      target: target,
       wallet: qtumAddressCreator,
       creatorName: creatorName,
       creatorAccount: creatorAccount,
       object: event.object,
-      amount: event.amount,
+      amount: event.amount.toNumber(),
       actor: sponsorAccount,
       name: sponsorName,
       address: qtumAddressSponsor,
@@ -210,7 +215,7 @@ class GetStream extends Writable {
     await this.feed.addActivity(activity)
   }
 
-  async withdrawReward(event, time) {
+  async withdrawReward(event, time, target) {
     console.log('withdrawReward', event)
 
     const {
@@ -236,11 +241,12 @@ class GetStream extends Writable {
 
     const activity = {
       verb: 'withdraw',
+      target: target,
       wallet: qtumAddressCreator,
       creatorName: creatorName,
       creatorAccount: creatorAccount,
       object: event.wallet,
-      amount: event.amount,
+      amount: event.amount.toNumber(),
       actor: sponsorAccount,
       name: sponsorName,
       address: qtumAddressSponsor,
@@ -260,6 +266,7 @@ class GetStream extends Writable {
 
   async _write(chunk, encoding, callback) {
     if (chunk.log && chunk.log[0]) {
+      const target = chunk.transactionHash
       const event = chunk.log[0]
       const eventName = event._eventName
       const gasUsed = chunk.gasUsed
@@ -269,7 +276,7 @@ class GetStream extends Writable {
       if (this.eventHandlers[eventName]) {
         try {
           const time = new Date(chunk.blockNumber) // to enforce uniqueness in feed
-          await this.eventHandlers[eventName](event, time)
+          await this.eventHandlers[eventName](event, time, target)
           callback()
         } catch (e) {
           console.error(e.message)
