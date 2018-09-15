@@ -72,8 +72,6 @@ class GetStream extends Writable {
   }
 
   async updateAchievement(event, time, target) {
-    console.log('updateAchievement', event)
-
     const { userName, userAccount, userAddress } = await this.getUser(event.wallet)
     const qtumAddress = await this.qweb3.fromHexAddress(userAddress)
 
@@ -93,12 +91,12 @@ class GetStream extends Writable {
       time: time
     }
 
+    console.log('updateAchievement', activity)
+
     await this.feed.addActivity(activity)
   }
 
   async confirmAchievement(event, time, target) {
-    console.log('confirmAchievement', event)
-
     const {
       userAccount: creatorAccount,
       userName: creatorName,
@@ -131,12 +129,12 @@ class GetStream extends Writable {
       time: time
     }
 
+    console.log('confirmAchievement', activity)
+
     await this.feed.addActivity(activity)
   }
 
   async supportAchievement(event, time, target) {
-    console.log('supportAchievement', event)
-
     const {
       userAccount: creatorAccount,
       userName: creatorName,
@@ -167,12 +165,12 @@ class GetStream extends Writable {
       time: time
     }
 
+    console.log('supportAchievement', activity)
+
     await this.feed.addActivity(activity)
   }
 
   async depositReward(event, time, target) {
-    console.log('depositReward', event)
-
     const {
       userAccount: creatorAccount,
       userName: creatorName,
@@ -212,12 +210,12 @@ class GetStream extends Writable {
       time: time
     }
 
+    console.log('depositReward', activity)
+
     await this.feed.addActivity(activity)
   }
 
   async withdrawReward(event, time, target) {
-    console.log('withdrawReward', event)
-
     const {
       userAccount: creatorAccount,
       userName: creatorName,
@@ -257,6 +255,8 @@ class GetStream extends Writable {
       time: time
     }
 
+    console.log('withdrawReward', activity)
+
     await this.feed.addActivity(activity)
   }
 
@@ -265,25 +265,26 @@ class GetStream extends Writable {
   }
 
   async _write(chunk, encoding, callback) {
-    if (chunk.log && chunk.log[0]) {
+    if (chunk.log.length > 0) {
       const target = chunk.transactionHash
-      const event = chunk.log[0]
-      const eventName = event._eventName
       const gasUsed = chunk.gasUsed
 
-      console.log(`${eventName} gas: ${gasUsed}`)
+      console.log(`${target} => ${gasUsed} gas`)
 
-      if (this.eventHandlers[eventName]) {
-        try {
-          const time = new Date(chunk.blockNumber) // to enforce uniqueness in feed
-          await this.eventHandlers[eventName](event, time, target)
-          callback()
-        } catch (e) {
-          console.error(e.message)
-          callback()
+      for (const event of chunk.log) {
+        const eventName = event._eventName
+
+        if (this.eventHandlers[eventName]) {
+          try {
+            const time = new Date(chunk.blockNumber)
+            await this.eventHandlers[eventName](event, time, target)
+          } catch (e) {
+            console.error(e.message)
+          }
         }
       }
     }
+    callback()
   }
 }
 
