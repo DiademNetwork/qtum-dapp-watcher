@@ -3,8 +3,7 @@ const { Readable } = require('stream');
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
 class EventsStream extends Readable {
-  constructor(qweb3, processes, startBlock) {
-
+  constructor(qweb3, processes, startBlock, blockPerBlock = false) {
     super({ objectMode: true })
 
     const loadEvents = async (fromBlock, toBlock, address, topic, metadata, name) => {
@@ -22,6 +21,9 @@ class EventsStream extends Readable {
 
       let fromBlock = startBlock
       let toBlock = blockNumber
+      if (blockPerBlock === true) {
+        toBlock = fromBlock
+      }
 
       for (const process of processes) {
         await loadEvents(fromBlock, toBlock, process.address, process.topic, process.metadata, process.name)
@@ -32,7 +34,11 @@ class EventsStream extends Readable {
 
         if (blockNumber > toBlock) {
           fromBlock = toBlock + 1
-          toBlock = blockNumber
+          if (blockPerBlock === true) {
+            toBlock = fromBlock
+          } else {
+            toBlock = blockNumber
+          }
 
           for (const process of processes) {
             await loadEvents(fromBlock, toBlock, process.address, process.topic, process.metadata, process.name)
