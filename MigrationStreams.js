@@ -9,6 +9,9 @@ class MigrationPrepareStream extends Transform {
   _transform(data, encoding, callback) {
     if (data.log.length > 0) {
       for (const event of data.log) {
+        if (event.amount) {
+          event.amount = event.amount.toNumber()
+        }
         this.push(JSON.stringify(event).concat(','))
       }
     }
